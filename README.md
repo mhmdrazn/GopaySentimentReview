@@ -366,4 +366,4 @@ Run notebooks in order from 01 to 05. Each notebook expects the CSV output of th
 - Universal Sentence Encoder v4 on TensorFlow Hub: https://tfhub.dev/google/universal-sentence-encoder/4
 - Sentiment Analysis on IMDB by FarhanaTeli: https://github.com/FarhanaTeli/Sentiment_Analysis_IMDB
 - TF-IDF reference implementation by Wittline: https://github.com/Wittline/tf-idf
-- Course reference project: https://github.com/divaardeliaa/ScrapReviewReliveApp
+
