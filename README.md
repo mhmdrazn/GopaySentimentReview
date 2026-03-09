@@ -38,14 +38,19 @@ GopaySentimentReview/
 │   ├── App-Versions-by-Review-Count.png
 │   ├── Average-Score-App-Version.png
 │   ├── Impact-of-Stopwords-Removal.png
-│   └── Sentiment-Label-Distribution.png
+│   ├── Sentiment-Label-Distribution.png
+│   ├── Class-Imbalance-Distribution.png
+│   ├── Subsampling-Distribution-Comparison.png
+│   ├── TF-IDF-Accuracy-Comparison.png
+│   ├── USE-Accuracy-Comparison.png
+│   └── Final-Classifier-Accuracy-Comparison.png
 │
 ├── Notebook/
-│   ├── 01_Gopay_Review_Scrapping.ipynb
-│   ├── 02_Gopay_Review_EDA.ipynb
-│   ├── 03_Gopay_Review_Preprocessing.ipynb
-│   ├── 04_Gopay_Review_Sentiment_Analysis.ipynb
-│   └── 05_Gopay_Review_TF_IDF.ipynb
+│   ├── 1-Gopay-Review-Scrapping.ipynb
+│   ├── 2-Gopay-Review-EDA.ipynb
+│   ├── 3-Gopay-Review-Preprocessing.ipynb
+│   ├── 4-Gopay-Review-Sentiment-Analysis.ipynb
+│   └── 5-Gopay-Review-TFIDF.ipynb
 │
 └── README.md
 ```
@@ -60,6 +65,7 @@ GopaySentimentReview/
 - [Notebooks](#notebooks)
 - [Datasets](#datasets)
 - [Preprocessing Design](#preprocessing-design)
+- [Sentiment Analysis](#sentiment-analysis)
 - [Modeling Approach](#modeling-approach)
 - [Visualizations](#visualizations)
 - [Setup and Installation](#setup-and-installation)
@@ -99,13 +105,17 @@ Output: `gopay_reviews_clean.csv`
 
 ### 04 - Sentiment Analysis
 
-Applies TextBlob to compute a polarity score and a subjectivity score for each preprocessed review. Polarity measures whether the text leans positive or negative on a scale from -1.0 to +1.0. Subjectivity measures how opinion-based the text is on a scale from 0.0 to 1.0. The notebook then produces a scatter plot of polarity versus subjectivity with points colored by sentiment class, word clouds for the full corpus and separately for positive and negative reviews, a bar chart of review volume by year, a rating distribution chart, and a stacked bar chart showing how the proportion of positive, neutral, and negative reviews shifts over time.
+Applies TextBlob to compute a polarity score and a subjectivity score for each preprocessed review. Polarity measures whether the text leans positive or negative on a scale from -1.0 to +1.0. Subjectivity measures how opinion-based the text is on a scale from 0.0 to 1.0.
+
+Visualizations produced include a scatter plot of polarity versus subjectivity colored by sentiment class, word clouds for the full corpus and separately for each sentiment group, a bar chart of review volume by year, a rating distribution chart, and a stacked bar chart showing how the proportion of positive, neutral, and negative reviews shifts over time.
 
 Output: `gopay_reviews_sentiment.csv`
 
-### 05 - TF-IDF and Classification
+### 05 - Classification (TF-IDF, USE, TF-IDF + USE)
 
-Trains five machine learning classifiers using three different text embedding strategies and compares their performance. Classifiers are evaluated on a held-out 20% test set using accuracy, weighted precision, weighted recall, and weighted F1-score. Each classifier-embedding combination produces a classification report and confusion matrix. The final visualization is a grouped bar chart comparing accuracy across all fifteen combinations.
+Trains and compares five machine learning classifiers across three text embedding strategies: TF-IDF, Universal Sentence Encoder (USE), and a combined TF-IDF + USE feature matrix. To handle the dataset size (~216k rows) and class imbalance efficiently, this notebook applies stratified subsampling to 60,000 representative samples and uses `class_weight='balanced'` across all compatible classifiers.
+
+Each classifier-embedding combination is evaluated on a held-out 20% test set. Results are compiled into a ranked summary table and a grouped bar chart comparing accuracy across all 13 combinations.
 
 ---
 
@@ -199,42 +209,73 @@ Without this step, the stemmer receives tokens it cannot recognize and produces 
 
 ---
 
+## Sentiment Analysis
+
+### TextBlob Scoring
+
+TextBlob assigns two scalar scores to each preprocessed review:
+
+| Score | Range | Interpretation |
+| --- | --- | --- |
+| Polarity | -1.0 to +1.0 | Negative to positive sentiment strength |
+| Subjectivity | 0.0 to 1.0 | Objective factual statement to subjective personal opinion |
+
+These scores are used to visualize how the sentiment classes distribute across the polarity-subjectivity space, and to confirm that the label assignments from star ratings align with the text-level sentiment signal.
+
+### Class Distribution
+
+The dataset has a significant class imbalance inherited directly from the rating distribution on the Play Store. Positive reviews dominate the corpus, which affects how classifiers should be evaluated and trained.
+
+| Class | Count | Proportion |
+| --- | --- | --- |
+| positive | 147,814 | ~68% |
+| negative | 59,639 | ~27% |
+| neutral | 9,482 | ~4% |
+
+*Sentiment Label Distribution:*
+
+![Sentiment Label Distribution](Images/Sentiment-Label-Distribution.png)
+
+---
+
 ## Modeling Approach
+
+### Subsampling Strategy
+
+Because the full dataset exceeds 216,000 rows, training USE embeddings and constructing the TF-IDF + USE combined feature matrix on the full data would require significant compute time and memory (~3.6 GB RAM for the combined array alone). The notebook applies **stratified subsampling** to 60,000 samples, preserving the class distribution proportionally while guaranteeing a minimum of 3,000 samples for the minority neutral class. This makes all three embedding strategies practical to run within a standard Colab session.
+
+### Class Imbalance Handling
+
+Because the positive class dominates (~68%), classifiers trained without correction tend to ignore the neutral class entirely, producing near-zero recall for that class. Two approaches are applied:
+
+- `class_weight='balanced'` on Linear SVM, Logistic Regression, and Random Forest, which adjusts the loss function to penalize errors on minority classes more heavily.
+- `compute_sample_weight('balanced')` passed as `sample_weight` to XGBoost during `.fit()`, since XGBoost does not support the `class_weight` parameter directly.
+
+Naive Bayes is not adjusted because MultinomialNB handles class priors implicitly through its probability estimation.
 
 ### Text Representations
 
-Three embedding strategies are compared. Each produces a different representation of the same text, and classifiers are trained and evaluated separately on each one.
-
-| Strategy | Vector Type | Size | Notes |
+| Strategy | Vector Type | Dimensions | Notes |
 | --- | --- | --- | --- |
-| TF-IDF | Sparse | 5,000 features | Term frequency weighted by rarity across the corpus |
-| USE | Dense | 512 dimensions | Sentence-level embeddings from Google's Universal Sentence Encoder |
-| TF-IDF + USE | Dense | 5,512 dimensions | TF-IDF sparse matrix converted to dense, then horizontally concatenated with USE |
-
-The combination strategy works by calling `.toarray()` on the TF-IDF sparse matrix before concatenating it with the USE embedding matrix using `np.hstack`. This produces a single dense feature matrix that carries both keyword-level and semantic-level information.
+| TF-IDF | Sparse | 5,000 | Term frequency weighted by rarity across the corpus. Vectorizer fit on training data only. |
+| USE | Dense | 512 | Sentence-level embeddings from Google's Universal Sentence Encoder v4. |
+| TF-IDF + USE | Dense | 5,512 | TF-IDF sparse matrix converted to dense via `.toarray()`, then concatenated with USE via `np.hstack`. |
 
 ### Classifiers
 
 | Classifier | Configuration |
 | --- | --- |
-| Linear SVM | LinearSVC, max_iter=2000 |
-| Logistic Regression | max_iter=1000, multinomial |
-| Naive Bayes | MultinomialNB, TF-IDF only |
-| XGBoost | multi:softmax objective, mlogloss eval metric |
-| Random Forest | 100 estimators, max_depth=3, bootstrap sampling |
+| Linear SVM | `LinearSVC`, `max_iter=2000`, `class_weight='balanced'` |
+| Logistic Regression | `max_iter=1000`, `class_weight='balanced'`, `n_jobs=-1` |
+| Naive Bayes | `MultinomialNB`, TF-IDF only (requires non-negative features) |
+| XGBoost | `multi:softmax`, `tree_method='hist'`, GPU-accelerated when available, `sample_weight` for imbalance |
+| Random Forest | 100 estimators, `max_depth=15`, `class_weight='balanced'`, `n_jobs=-1` |
 
-Naive Bayes is only applied with TF-IDF features. MultinomialNB requires all feature values to be non-negative, and USE embeddings contain negative values that violate this constraint. Attempting to use MultinomialNB with USE or TF-IDF + USE will raise an error, so those combinations are intentionally excluded.
+Naive Bayes is excluded from USE and TF-IDF + USE evaluations because `MultinomialNB` requires all feature values to be non-negative. Dense USE embeddings contain negative values that violate this constraint.
 
 ### Evaluation Protocol
 
-The dataset is split 80/20 into training and test sets using stratified sampling to preserve the class distribution in both partitions. For each classifier-embedding pair, the following metrics are computed on the test set:
-
-- Accuracy
-- Precision (weighted average across classes)
-- Recall (weighted average across classes)
-- F1-score (weighted average across classes)
-- Per-class precision, recall, and F1 from the classification report
-- Confusion matrix
+The 60k sampled dataset is split 80/20 using stratified sampling to preserve class proportions in both partitions. Each classifier-embedding pair is evaluated on the held-out test set using weighted accuracy, precision, recall, F1-score, per-class classification report, and confusion matrix.
 
 ---
 
@@ -244,7 +285,7 @@ The dataset is split 80/20 into training and test sets using stratified sampling
 
 ![Distribution of Review Scores](Images/Distribution-of-Reviews-Scores.png)
 
-This shows how user ratings are distributed across the 1 to 5 scale. Most review datasets for popular apps are bimodal, with high concentrations at 1 and 5. Understanding this skew is important for interpreting class imbalance in the sentiment labels.
+The dataset is bimodal, with concentrations at scores 1 and 5. This rating pattern directly produces the class imbalance seen in the sentiment labels, where neutral (score 3) is heavily underrepresented.
 
 ---
 
@@ -252,7 +293,7 @@ This shows how user ratings are distributed across the 1 to 5 scale. Most review
 
 ![Monthly Review Volume and Average Score Over Time](Images/Monthly-Review-Volume-and-Average-Score-Over-Time.png)
 
-Plotting volume and average score on the same time axis can reveal correlations between review spikes and rating drops, often linked to app updates, outages, or policy changes.
+Plotting volume and average score on the same time axis reveals correlations between review spikes and rating drops, which are often linked to app updates, outages, or policy changes.
 
 ---
 
@@ -268,7 +309,7 @@ A frequency analysis of the unprocessed text. At this stage the most common term
 
 ![Words by Sentiment Group Raw](Images/Words-by-Sentiment-Group-Raw.png)
 
-Word frequency broken down by positive, neutral, and negative groups. Comparing these distributions shows which terms are distinctive to each class before preprocessing removes the noise.
+Word frequency broken down by positive, neutral, and negative groups. Comparing these distributions shows which terms are distinctive to each sentiment class before preprocessing removes the noise.
 
 ---
 
@@ -276,7 +317,7 @@ Word frequency broken down by positive, neutral, and negative groups. Comparing 
 
 ![Word Count Distribution by Score and Review Length Distribution](Images/Word-Count-Distribution-by-Score-and-Review-Length-Distribution.png)
 
-Review length varies substantially across ratings. Low-score reviews tend to be longer and more detailed, while high-score reviews are often short and affirmative.
+Review length varies substantially across ratings. Low-score reviews tend to be longer and more detailed, while high-score reviews are often short and affirmative. This pattern is consistent with users writing more when they are dissatisfied.
 
 ---
 
@@ -284,7 +325,7 @@ Review length varies substantially across ratings. Low-score reviews tend to be 
 
 ![Score Composition Over Time](Images/Score-Composition-Over-Time.png)
 
-A stacked view of how the proportion of each star rating changes over time. This makes it easier to see periods when negative reviews increased as a share of total volume.
+A stacked view of how the proportion of each star rating shifts over time. This makes it easier to see periods when negative reviews increased as a share of total volume.
 
 ---
 
@@ -292,7 +333,7 @@ A stacked view of how the proportion of each star rating changes over time. This
 
 ![App Versions by Review Count](Images/App-Versions-by-Review-Count.png)
 
-Shows which app versions generated the most reviews. High review counts for a specific version can indicate that the release attracted significant user attention, positive or negative.
+Shows which app versions generated the most reviews. High review counts for a specific version can indicate that the release attracted significant user attention, whether positive or negative.
 
 ---
 
@@ -309,14 +350,6 @@ Average star rating per app version. When read alongside the review count chart,
 ![Impact of Stopwords Removal](Images/Impact-of-Stopwords-Removal.png)
 
 Compares total token count before and after stopword removal to show how much noise the Sastrawi stopword list eliminates from the corpus.
-
----
-
-*Sentiment Label Distribution:*
-
-![Sentiment Label Distribution](Images/Sentiment-Label-Distribution.png)
-
-Distribution of the three sentiment classes after labeling from star ratings. The class balance here directly affects how classifier performance should be interpreted.
 
 ---
 
@@ -366,4 +399,4 @@ Run notebooks in order from 01 to 05. Each notebook expects the CSV output of th
 - Universal Sentence Encoder v4 on TensorFlow Hub: https://tfhub.dev/google/universal-sentence-encoder/4
 - Sentiment Analysis on IMDB by FarhanaTeli: https://github.com/FarhanaTeli/Sentiment_Analysis_IMDB
 - TF-IDF reference implementation by Wittline: https://github.com/Wittline/tf-idf
-
+- Course reference project: https://github.com/divaardeliaa/ScrapReviewReliveApp
