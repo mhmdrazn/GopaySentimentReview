@@ -363,7 +363,7 @@ Bar and pie chart showing the original class distribution across the full ~216k 
 
 *Subsampling Distribution Comparison:*
 
-![Subsampling Distribution Comparison](Images/Subsampling-Distribution-Comparison.png)
+![Subsampling Distribution Comparison](Images/Subsampling-Distribution-Comparison-updated.png)
 
 Side-by-side comparison of the class distribution before and after stratified subsampling to 60,000 samples. The right chart uses hatch fill to visually distinguish it from the full dataset view. The delta annotation below each bar shows the shift in class proportion relative to the original.
 
@@ -440,3 +440,4 @@ Run notebooks in order from 01 to 05. Each notebook expects the CSV output of th
 - Sentiment Analysis on IMDB by FarhanaTeli: https://github.com/FarhanaTeli/Sentiment_Analysis_IMDB
 - TF-IDF reference implementation by Wittline: https://github.com/Wittline/tf-idf
 - Course reference project: https://github.com/divaardeliaa/ScrapReviewReliveApp
+
