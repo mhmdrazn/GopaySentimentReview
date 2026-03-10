@@ -2,12 +2,12 @@
 
 A Natural Language Processing project that scrapes, processes, and classifies user reviews of the **GoPay** digital payment app from the Google Play Store. The pipeline is built specifically for informal Bahasa Indonesia, handling the slang-heavy, abbreviation-dense writing style that characterizes Indonesian app reviews.
 
-| | |
-| --- | --- |
-| **Name** | Muhammad Razan Parisya Putra |
-| **NRP** | 5026231174 |
+| Name | Muhammad Razan Parisya Putra |
+|------|-------------------------------|
+| NRP  | 5026231174                   |
 
 ---
+![Gopay](Images/gopay.jpg)
 
 ## Background
 
@@ -350,6 +350,46 @@ Average star rating per app version. When read alongside the review count chart,
 ![Impact of Stopwords Removal](Images/Impact-of-Stopwords-Removal.png)
 
 Compares total token count before and after stopword removal to show how much noise the Sastrawi stopword list eliminates from the corpus.
+
+---
+
+*Class Imbalance Distribution:*
+
+![Class Imbalance Distribution](Images/Class-Imbalance-Distribution.png)
+
+Bar and pie chart showing the original class distribution across the full ~216k dataset before any sampling. The positive class accounts for roughly 68% of all reviews, making imbalance handling a necessary step before training.
+
+---
+
+*Subsampling Distribution Comparison:*
+
+![Subsampling Distribution Comparison](Images/Subsampling-Distribution-Comparison.png)
+
+Side-by-side comparison of the class distribution before and after stratified subsampling to 60,000 samples. The right chart uses hatch fill to visually distinguish it from the full dataset view. The delta annotation below each bar shows the shift in class proportion relative to the original.
+
+---
+
+*TF-IDF Accuracy Comparison:*
+
+![TF-IDF Accuracy Comparison](Images/TF-IDF-Accuracy-Comparison.png)
+
+Bar chart comparing the accuracy of all five classifiers trained on TF-IDF features with `class_weight='balanced'` applied. Linear SVM and Logistic Regression consistently rank highest among TF-IDF models.
+
+---
+
+*USE Accuracy Comparison:*
+
+![USE Accuracy Comparison](Images/USE-Accuracy-Comparison.png)
+
+Bar chart comparing the accuracy of four classifiers trained on Universal Sentence Encoder embeddings. Naive Bayes is excluded from this comparison because it cannot handle the negative values present in dense USE embeddings.
+
+---
+
+*Final Classifier Accuracy Comparison (All Embeddings):*
+
+![Final Classifier Accuracy Comparison](Images/Final-Classifier-Accuracy-Comparison.png)
+
+Grouped bar chart summarizing accuracy across all 13 classifier-embedding combinations. Each cluster represents one classifier, with three bars for TF-IDF, USE, and TF-IDF + USE respectively. TF-IDF generally outperforms USE on this dataset, reflecting the mismatch between USE's English training and the informal Bahasa Indonesia text.
 
 ---
 
