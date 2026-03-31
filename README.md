@@ -89,7 +89,7 @@ The project runs in five sequential stages. Each stage produces an output that f
 
 ```
 [Scraping] --> [EDA] --> [Preprocessing] --> [Stopwords] --> [Sentiment Analysis] --> [BoW] --> [TF-IDF + Classifier]
-   NB 1         NB 2        NB 3              NB 3b             NB 6                  NB 4         NB 5
+   NB 1         NB 2        NB 3              NB 4               NB 5                  NB 6         NB 7
  367,195      367,195     209,311           209,311            209,311               209,311       60,000
  reviews      reviews     reviews           reviews            reviews               reviews      (sampled)
 ```
@@ -112,7 +112,7 @@ No stage should be skipped. The preprocessing output is a dependency for both th
 
 ## Datasets
 
-The dataset can be accesseed (here)[https://drive.google.com/drive/folders/1M6dvMwpy7cZbA3AmOSviAhOJ-TsRNLTi?usp=sharing]
+The dataset can be accesseed [here](https://drive.google.com/drive/folders/1M6dvMwpy7cZbA3AmOSviAhOJ-TsRNLTi?usp=sharing)
 
 ### gopay_reviews_raw.csv
 
