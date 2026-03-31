@@ -19,40 +19,50 @@ One of the core technical challenges here is the language itself. Reviews are wr
 
 ---
 
+## Week Summary
+
+### Week 2: Data Scraping & EDA
+Pengumpulan 367,195 review GoPay dari Google Play Store dan analisis eksploratif awal (distribusi rating, tren temporal, analisis teks mentah).
+
+### Week 3: Preprocessing, Stopwords, & Sentiment
+Pipeline preprocessing 16 langkah untuk Bahasa Indonesia informal, analisis stopwords dengan pendekatan 3+1 layer, dan sentiment scoring menggunakan TextBlob.
+
+### Week 4: Bag of Words & TF-IDF
+Feature extraction menggunakan BoW dan TF-IDF, analisis regex untuk positive/negative signals, dan perbandingan 13 kombinasi classifier-embedding untuk klasifikasi sentimen. Termasuk tugas tambahan TF-IDF (Danantara, Sentence Manchester, Artikel News).
+
+---
+
 ## Repository Structure
 
 ```
-GopaySentimentReview/
-├── Dataset/
-│   ├── gopay_reviews_raw.csv
-│   ├── gopay_reviews_clean.csv
-│   └── gopay_reviews_sentiment.csv
-│
-├── Images/
-│   ├── Distribution-of-Reviews-Scores.png
-│   ├── Monthly-Review-Volume-and-Average-Score-Over-Time.png
-│   ├── Most-Frequent-Words-Raw.png
-│   ├── Words-by-Sentiment-Group-Raw.png
-│   ├── Word-Count-Distribution-by-Score-and-Review-Length-Distribution.png
-│   ├── Score-Composition-Over-Time.png
-│   ├── App-Versions-by-Review-Count.png
-│   ├── Average-Score-App-Version.png
-│   ├── Impact-of-Stopwords-Removal.png
-│   ├── Sentiment-Label-Distribution.png
-│   ├── Class-Imbalance-Distribution.png
-│   ├── Subsampling-Distribution-Comparison.png
-│   ├── TF-IDF-Accuracy-Comparison.png
-│   ├── USE-Accuracy-Comparison.png
-│   └── Final-Classifier-Accuracy-Comparison.png
-│
-├── Notebook/
-│   ├── 1-Gopay-Review-Scrapping.ipynb
-│   ├── 2-Gopay-Review-EDA.ipynb
-│   ├── 3-Gopay-Review-Preprocessing.ipynb
-│   ├── 4-Gopay-Review-Sentiment-Analysis.ipynb
-│   └── 5-Gopay-Review-TFIDF.ipynb
-│
-└── README.md
+repository/
+|
+|-- Week 2 - Data Scraping & EDA/
+|   |-- notebooks/
+|   |   |-- 1-Gopay-Review-Scrapping.ipynb
+|   |   |-- 2-Gopay-Review-EDA.ipynb
+|   |-- images/
+|   |-- README.md
+|
+|-- Week 3 - Preprocessing & Stopwords/
+|   |-- notebooks/
+|   |   |-- 3-Gopay-Review-Preprocessing.ipynb
+|   |   |-- 4-Gopay-Review-Stopwords-Analysis.ipynb
+|   |   |-- 5-Gopay-Review-Sentiment-Analysis.ipynb
+|   |-- images/
+|   |-- README.md
+|
+|-- Week 4 - Bag of Words & TF-IDF/
+|   |-- notebooks/
+|   |   |-- 6-Gopay-Review-BoW.ipynb
+|   |   |-- 7-Gopay-Review-TFIDF.ipynb
+|   |   |-- Tugas-1A-TFIDF-Danantara.ipynb
+|   |   |-- Tugas-1B-TFIDF-Sentence-Manchester.ipynb
+|   |   |-- Tugas-1C-TFIDF-Artikel-News.ipynb
+|   |-- images/
+|   |-- README.md
+|
+|-- README.md
 ```
 
 ---
@@ -78,9 +88,10 @@ GopaySentimentReview/
 The project runs in five sequential stages. Each stage produces an output that feeds directly into the next.
 
 ```
-Scraping  -->  EDA  -->  Preprocessing  -->  Sentiment Analysis  -->  Classification
-    |            |             |                     |                      |
-raw CSV     patterns      clean CSV           scored CSV            model results
+[Scraping] --> [EDA] --> [Preprocessing] --> [Stopwords] --> [Sentiment Analysis] --> [BoW] --> [TF-IDF + Classifier]
+   NB 1         NB 2        NB 3              NB 3b             NB 6                  NB 4         NB 5
+ 367,195      367,195     209,311           209,311            209,311               209,311       60,000
+ reviews      reviews     reviews           reviews            reviews               reviews      (sampled)
 ```
 
 No stage should be skipped. The preprocessing output is a dependency for both the sentiment and classification notebooks.
@@ -89,37 +100,19 @@ No stage should be skipped. The preprocessing output is a dependency for both th
 
 ## Notebooks
 
-### 01 - Scraping
-
-Uses `google-play-scraper` to collect reviews from the GoPay listing on the Google Play Store. For each review, the scraper retrieves the text content, star rating, posting timestamp, app version at the time of writing, thumbs-up count, and developer reply if one exists. The full output is written to `gopay_reviews_raw.csv`.
-
-### 02 - Exploratory Data Analysis
-
-Before any transformation is applied, this notebook surveys the raw data to understand its shape and distributions. Key analyses include the distribution of star ratings across the 1 to 5 scale, monthly review volume plotted against average score to surface periods of user dissatisfaction, the most frequently occurring words in unprocessed review text, word frequency broken down by sentiment group, review length distributions grouped by score, score composition shifts over time, and review volume and average rating segmented by app version. The app version analysis is particularly useful for identifying whether specific releases triggered rating drops.
-
-### 03 - Preprocessing
-
-This is the most technically involved notebook. It applies a full Indonesian NLP pipeline designed for informal text. Each step is sequenced deliberately because the output of one step is the expected input format for the next. The pipeline is described in detail in the [Preprocessing Design](#preprocessing-design) section below.
-
-Output: `gopay_reviews_clean.csv`
-
-### 04 - Sentiment Analysis
-
-Applies TextBlob to compute a polarity score and a subjectivity score for each preprocessed review. Polarity measures whether the text leans positive or negative on a scale from -1.0 to +1.0. Subjectivity measures how opinion-based the text is on a scale from 0.0 to 1.0.
-
-Visualizations produced include a scatter plot of polarity versus subjectivity colored by sentiment class, word clouds for the full corpus and separately for each sentiment group, a bar chart of review volume by year, a rating distribution chart, and a stacked bar chart showing how the proportion of positive, neutral, and negative reviews shifts over time.
-
-Output: `gopay_reviews_sentiment.csv`
-
-### 05 - Classification (TF-IDF, USE, TF-IDF + USE)
-
-Trains and compares five machine learning classifiers across three text embedding strategies: TF-IDF, Universal Sentence Encoder (USE), and a combined TF-IDF + USE feature matrix. To handle the dataset size (~216k rows) and class imbalance efficiently, this notebook applies stratified subsampling to 60,000 representative samples and uses `class_weight='balanced'` across all compatible classifiers.
-
-Each classifier-embedding combination is evaluated on a held-out 20% test set. Results are compiled into a ranked summary table and a grouped bar chart comparing accuracy across all 13 combinations.
-
----
+| Notebook | Nama | Input | Output |
+|----------|------|-------|--------|
+| NB 1 | Scraping | Google Play API | `gopay_reviews_raw.csv` (367,195 rows) |
+| NB 2 | EDA | `gopay_reviews_raw.csv` | Visualisasi + insights |
+| NB 3 | Preprocessing | `gopay_reviews_raw.csv` | `gopay_reviews_cleandata.csv` (209,311 rows) |
+| NB 4 | Stopwords Analysis | `gopay_reviews_cleandata.csv` | Analisis stopwords + noise words |
+| NB 5 | Sentiment Analysis | `gopay_reviews_cleandata.csv` | `gopay_reviews_sentiment.csv` (209,311 rows) |
+| NB 6 | Bag of Words | `gopay_reviews_sentiment.csv` | BoW matrix + vocabulary + regex analysis |
+| NB 7 | TF-IDF + Classifier | `gopay_reviews_sentiment.csv` | Model comparison (13 kombinasi) |
 
 ## Datasets
+
+The dataset can be accesseed {here}[https://drive.google.com/drive/folders/1M6dvMwpy7cZbA3AmOSviAhOJ-TsRNLTi?usp=sharing]
 
 ### gopay_reviews_raw.csv
 
@@ -276,120 +269,6 @@ Naive Bayes is excluded from USE and TF-IDF + USE evaluations because `Multinomi
 ### Evaluation Protocol
 
 The 60k sampled dataset is split 80/20 using stratified sampling to preserve class proportions in both partitions. Each classifier-embedding pair is evaluated on the held-out test set using weighted accuracy, precision, recall, F1-score, per-class classification report, and confusion matrix.
-
----
-
-## Visualizations
-
-*Distribution of Review Scores:*
-
-![Distribution of Review Scores](Images/Distribution-of-Reviews-Scores.png)
-
-The dataset is bimodal, with concentrations at scores 1 and 5. This rating pattern directly produces the class imbalance seen in the sentiment labels, where neutral (score 3) is heavily underrepresented.
-
----
-
-*Monthly Review Volume and Average Score Over Time:*
-
-![Monthly Review Volume and Average Score Over Time](Images/Monthly-Review-Volume-and-Average-Score-Over-Time.png)
-
-Plotting volume and average score on the same time axis reveals correlations between review spikes and rating drops, which are often linked to app updates, outages, or policy changes.
-
----
-
-*Most Frequent Words in Raw Reviews:*
-
-![Most Frequent Words Raw](Images/Most-Frequent-Words-Raw.png)
-
-A frequency analysis of the unprocessed text. At this stage the most common terms are typically stopwords and slang, which motivates the preprocessing steps that follow.
-
----
-
-*Top Words by Sentiment Group:*
-
-![Words by Sentiment Group Raw](Images/Words-by-Sentiment-Group-Raw.png)
-
-Word frequency broken down by positive, neutral, and negative groups. Comparing these distributions shows which terms are distinctive to each sentiment class before preprocessing removes the noise.
-
----
-
-*Word Count Distribution by Score and Review Length Distribution:*
-
-![Word Count Distribution by Score and Review Length Distribution](Images/Word-Count-Distribution-by-Score-and-Review-Length-Distribution.png)
-
-Review length varies substantially across ratings. Low-score reviews tend to be longer and more detailed, while high-score reviews are often short and affirmative. This pattern is consistent with users writing more when they are dissatisfied.
-
----
-
-*Score Composition Over Time:*
-
-![Score Composition Over Time](Images/Score-Composition-Over-Time.png)
-
-A stacked view of how the proportion of each star rating shifts over time. This makes it easier to see periods when negative reviews increased as a share of total volume.
-
----
-
-*App Versions by Review Count:*
-
-![App Versions by Review Count](Images/App-Versions-by-Review-Count.png)
-
-Shows which app versions generated the most reviews. High review counts for a specific version can indicate that the release attracted significant user attention, whether positive or negative.
-
----
-
-*Average Score by App Version:*
-
-![Average Score by App Version](Images/Average-Score-App-Version.png)
-
-Average star rating per app version. When read alongside the review count chart, low-rated high-volume versions are candidates for closer textual analysis.
-
----
-
-*Impact of Stopword Removal:*
-
-![Impact of Stopwords Removal](Images/Impact-of-Stopwords-Removal.png)
-
-Compares total token count before and after stopword removal to show how much noise the Sastrawi stopword list eliminates from the corpus.
-
----
-
-*Class Imbalance Distribution:*
-
-![Class Imbalance Distribution](Images/Class-Imbalance-Distribution.png)
-
-Bar and pie chart showing the original class distribution across the full ~216k dataset before any sampling. The positive class accounts for roughly 68% of all reviews, making imbalance handling a necessary step before training.
-
----
-
-*Subsampling Distribution Comparison:*
-
-![Subsampling Distribution Comparison](Images/Subsampling-Distribution-Comparison-updated.png)
-
-Side-by-side comparison of the class distribution before and after stratified subsampling to 60,000 samples. The right chart uses hatch fill to visually distinguish it from the full dataset view. The delta annotation below each bar shows the shift in class proportion relative to the original.
-
----
-
-*TF-IDF Accuracy Comparison:*
-
-![TF-IDF Accuracy Comparison](Images/TF-IDF-Accuracy-Comparison.png)
-
-Bar chart comparing the accuracy of all five classifiers trained on TF-IDF features with `class_weight='balanced'` applied. Linear SVM and Logistic Regression consistently rank highest among TF-IDF models.
-
----
-
-*USE Accuracy Comparison:*
-
-![USE Accuracy Comparison](Images/USE-Accuracy-Comparison.png)
-
-Bar chart comparing the accuracy of four classifiers trained on Universal Sentence Encoder embeddings. Naive Bayes is excluded from this comparison because it cannot handle the negative values present in dense USE embeddings.
-
----
-
-*Final Classifier Accuracy Comparison (All Embeddings):*
-
-![Final Classifier Accuracy Comparison](Images/Final-Classifier-Accuracy-Comparison.png)
-
-Grouped bar chart summarizing accuracy across all 13 classifier-embedding combinations. Each cluster represents one classifier, with three bars for TF-IDF, USE, and TF-IDF + USE respectively. TF-IDF generally outperforms USE on this dataset, reflecting the mismatch between USE's English training and the informal Bahasa Indonesia text.
 
 ---
 

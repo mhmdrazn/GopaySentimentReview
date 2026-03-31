@@ -21,11 +21,52 @@ Mengumpulkan seluruh review GoPay dari Google Play Store menggunakan library `go
 Analisis eksploratif untuk memahami pola dan distribusi data sebelum preprocessing.
 
 Analisis yang dilakukan:
-- **Data Overview & Quality Check:** cek missing values, tipe data, duplikat
-- **Score Distribution:** distribusi rating 1-5 (bar chart + pie chart)
-- **Temporal Analysis:** volume review per bulan, tren rata-rata skor, komposisi skor dari waktu ke waktu (stacked area chart)
-- **Text Analysis:** distribusi panjang review per skor, kata-kata paling sering muncul (raw), perbandingan kata umum antara review positif vs negatif
-- **App Version Analysis:** jumlah review dan rata-rata skor per versi aplikasi
+- Data overview dan quality check (missing values, tipe data, duplikat)
+- Distribusi skor/rating
+- Analisis temporal (tren review per bulan/tahun)
+- Analisis teks (panjang review, kata paling sering)
+- Analisis per versi aplikasi
+
+## Images
+
+### Distribution-of-Reviews-Scores.png
+![Distribution of Reviews Scores](Week 2 - Data Scrapping & EDA/Images/Distribution-of-Reviews-Scores.png)
+Distribusi rating 1-5 dari seluruh review GoPay. Menunjukkan proporsi review per skor, mengindikasikan apakah dataset cenderung positif, negatif, atau seimbang. Umumnya review aplikasi memiliki distribusi U-shape (banyak di skor 1 dan 5).
+---
+
+### Monthly-Review-Volume-and-Average-Score-Over-Time.png
+![Monthly Review Volume and Average Score Over Time](Week 2 - Data Scrapping & EDA/Images/Monthly-Review-Volume-and-Average-Score-Over-Time.png)
+Dua panel: volume review per bulan (bar chart) dan rata-rata skor per bulan (line chart). Menunjukkan tren pertumbuhan jumlah review dan fluktuasi kepuasan pengguna dari waktu ke waktu.
+---
+
+### Score-Composition-Over-Time.png
+![Score Composition Over Time](Week 2 - Data Scrapping & EDA/Images/Score-Composition-Over-Time.png)
+Stacked area chart yang menampilkan komposisi skor 1-5 dari waktu ke waktu.
+---
+
+### Most-Frequent-Words-Raw.png
+![Most Frequent Words Raw](Week 2 - Data Scrapping & EDA/Images/Most-Frequent-Words-Raw.png)
+Bar chart kata-kata paling sering muncul di review mentah (sebelum preprocessing).
+---
+
+### Top-15-Words-by-Sentiment-Group-Raw.png
+![Top 15 Words by Sentiment Group Raw](Week 2 - Data Scrapping & EDA/Images/Top-15-Words-by-Sentiment-Group-Raw.png)
+Perbandingan 15 kata paling sering antara review positif vs negatif.
+---
+
+### Word-Count-Distribution-by-Score-and-Review-Length-Distribution.png
+![Word Count Distribution by Score and Review Length Distribution](Week 2 - Data Scrapping & EDA/Images/Word-Count-Distribution-by-Score-and-Review-Length-Distribution.png)
+Distribusi panjang review per skor rating.
+---
+
+### Average-Score-per-Top-App-Version.png
+![Average Score per Top App Version](Week 2 - Data Scrapping & EDA/Images/Average-Score-per-Top-App-Version.png)
+Rata-rata skor review per versi aplikasi.
+---
+
+### Top-20-App-Versions-by-Review-Count.png
+![Top 20 App Versions by Review Count](Week 2 - Data Scrapping & EDA/Images/Top-20-App-Versions-by-Review-Count.png)
+Versi aplikasi dengan jumlah review terbanyak.
 
 ## Dataset
 
@@ -35,13 +76,7 @@ Analisis yang dilakukan:
 
 ## Tools & Library
 
-- `google-play-scraper` -- scraping review dari Google Play Store
-- `pandas`, `numpy` -- manipulasi data
-- `matplotlib`, `seaborn` -- visualisasi
-- `collections.Counter` -- analisis frekuensi kata
-
-## Catatan
-
-- Dataset yang di-scrape mencakup review dari berbagai tahun hingga Februari 2026
-- Data mentah ini akan menjadi input untuk notebook preprocessing di Week 3
-- Beberapa kolom seperti `replyContent` memiliki banyak missing values karena tidak semua review dibalas oleh developer
+- `google-play-scraper` - scraping review dari Google Play Store
+- `pandas`, `numpy` - manipulasi data
+- `matplotlib`, `seaborn` - visualisasi
+- `collections.Counter` - analisis frekuensi kata
